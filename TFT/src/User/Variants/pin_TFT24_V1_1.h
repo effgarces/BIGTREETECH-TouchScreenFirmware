@@ -44,7 +44,7 @@
  * SERIAL_PORT_X: communicating with other controller(Octoprint, ESP3D, other UART Touch Screen, etc...)
  */
 #define SERIAL_PORT   _USART1  //default usart port
-//#define SERIAL_PORT_2 _USART2
+#define SERIAL_PORT_2 _USART3
 //#define SERIAL_PORT_3 _USART3
 //#define SERIAL_PORT_4 _UART4
 
@@ -86,7 +86,7 @@
 #define LCD_BTN_PIN   PB2
 
 // U disk support
-#define U_DISK_SUPPROT
+#define U_DISK_SUPPORT
 #define USE_USB_OTG_FS
 
 // Extend function(PS_ON, filament_detect)

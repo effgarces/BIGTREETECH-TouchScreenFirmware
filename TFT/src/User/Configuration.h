@@ -14,7 +14,7 @@
  * ST7920_SPI // Marlin Mode
  * SERIAL_TSC // Touch Mode
  */
-#define DEFAULT_LCD_MODE SERIAL_TSC
+#define DEFAULT_LCD_MODE ST7920_SPI
 
 /**
  * Default Startup Knob LED Color (TFT35 E3)
@@ -86,7 +86,7 @@
  *
  * *** ONLY SUPPORTED ON TFT24 V1.1, TFT35 V3.0, AND TFT28 V3.0 ***
  */
-//#define CLEAN_MODE_SWITCHING_SUPPORT  // Enable CLEAN MODE SWITCHING SUPPORT
+#define CLEAN_MODE_SWITCHING_SUPPORT  // Enable CLEAN MODE SWITCHING SUPPORT
 
 //===========================================================================
 //========================== Touch Mode Settings ============================
@@ -240,7 +240,7 @@
  * The TFT will auto configure M27 AutoReport with M115 command
  * Set the time interval to poll SD Printing status if Marlin reports M27 disabled.
  */
-#define ONBOARD_SD_SUPPORT
+//#define ONBOARD_SD_SUPPORT
 #ifdef ONBOARD_SD_SUPPORT
   #define M27_REFRESH                3        // Time in sec for M27 command
   #define M27_WATCH_OTHER_SOURCES    true     // if true the polling on M27 report is always active. Case: SD print started not from TFT35
