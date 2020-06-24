@@ -31,6 +31,16 @@ static FONT_BITMAP font[] = {
     BYTE_WIDTH * 2, // default "word_unicode.fon" dot matrix library font size is 24*24 / 16*16
     0x0,  // the first character in WORD_UNICODE is 0x0000
   },
+  { // Greek and Coptic
+    0x370,
+    0x3FF,
+    BYTE_HEIGHT,
+    BYTE_WIDTH,
+    WORD_UNICODE,
+    BYTE_HEIGHT,
+    BYTE_WIDTH * 2, // default "word_unicode.fon" dot matrix library font size is 24*24 / 16*16
+    0x0,  // the first character in WORD_UNICODE is 0x0000
+  },
   { // Cyrillic(Russia)
     0x400,
     0x451,
@@ -124,6 +134,21 @@ uint16_t GUI_StrPixelWidth(const uint8_t *const str)
     getCharacterInfo(str + i, &info);
     i += info.bytes;
     len += info.pixelWidth;
+  }
+  return len;
+}
+uint16_t getUTF8Length(const uint8_t *const str)
+{
+ uint16_t i = 0, len = 0;
+  CHAR_INFO info;
+
+  if(str == NULL) return 0;
+  while(str[i])
+  {
+    info.bytes = 0;
+    getUTF8EncodeInfo(str + i, &info);
+    i += info.bytes;
+    len ++;
   }
   return len;
 }

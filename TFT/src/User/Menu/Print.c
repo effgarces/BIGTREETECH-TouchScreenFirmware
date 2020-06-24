@@ -73,7 +73,14 @@ void scrollFileNameCreate(u8 i)
   }
   else if(num<infoFile.F_num+infoFile.f_num)
   {
-    Scroll_CreatePara(&gcodeScroll, (u8* )((infoFile.source == BOARD_SD) ? infoFile.Longfile[num-infoFile.F_num] : infoFile.file[num-infoFile.F_num]), &gcodeRect[i]);
+    if (infoMachineSettings.long_filename_support == ENABLED)
+    {
+      Scroll_CreatePara(&gcodeScroll, (u8* )((infoFile.source == BOARD_SD) ? infoFile.Longfile[num-infoFile.F_num] : infoFile.file[num-infoFile.F_num]), &gcodeRect[i]);
+    }
+    else
+    {
+      Scroll_CreatePara(&gcodeScroll, (u8* )((infoFile.source == BOARD_SD) ? infoFile.file[num-infoFile.F_num] : infoFile.file[num-infoFile.F_num]), &gcodeRect[i]);
+    }
   }
 }
 
@@ -104,9 +111,9 @@ void gocdeIconDraw(void)
   scrollFileNameCreate(0);
   Scroll_CreatePara(&titleScroll, (uint8_t* )infoFile.title, &titleRect);
   printIconItems.title.address = (uint8_t* )infoFile.title;
-  GUI_SetBkColor(TITLE_BACKGROUND_COLOR);
+  GUI_SetBkColor(infoSettings.title_bg_color);
   GUI_ClearPrect(&titleRect);
-  GUI_SetBkColor(BACKGROUND_COLOR);
+  GUI_SetBkColor(infoSettings.bg_color);
 
   //draw folders
   for(i=0;(i + infoFile.cur_page * NUM_PER_PAGE < infoFile.F_num) && (i < NUM_PER_PAGE) ; i++)                  // folder
@@ -122,7 +129,14 @@ void gocdeIconDraw(void)
     curItem.icon = ICON_FILE;
     if (infoFile.source == BOARD_SD) { // on board long file name, M33 is required.
       menuDrawItem(&curItem, i);
-      normalNameDisp(&gcodeRect[i], (u8* )infoFile.Longfile[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+      if (infoMachineSettings.long_filename_support == ENABLED)
+      {
+        normalNameDisp(&gcodeRect[i], (u8* )infoFile.Longfile[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+      }
+      else
+      {
+        normalNameDisp(&gcodeRect[i], (u8* )infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+      }
     } else {
       // if model preview bmp exists, display bmp directly without writing to flash
       gn = strlen(infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]) - 6; // -6 means ".gcode"
@@ -153,9 +167,9 @@ void gocdeListDraw(void)
 
   Scroll_CreatePara(&titleScroll, (u8 *)infoFile.title, &titleRect);
   printListItems.title.address = (u8 *)infoFile.title;
-  GUI_SetBkColor(TITLE_BACKGROUND_COLOR);
+  GUI_SetBkColor(infoSettings.title_bg_color);
   GUI_ClearRect(0, 0, LCD_WIDTH, TITLE_END_Y);
-  GUI_SetBkColor(BACKGROUND_COLOR);
+  GUI_SetBkColor(infoSettings.bg_color);
 
   for (i = 0; (i + infoFile.cur_page * NUM_PER_PAGE < infoFile.F_num) && (i < NUM_PER_PAGE); i++) // folder
   {
@@ -167,7 +181,15 @@ void gocdeListDraw(void)
   for (; (i + infoFile.cur_page * NUM_PER_PAGE < infoFile.f_num + infoFile.F_num) && (i < NUM_PER_PAGE); i++) // gcode file
   {
     printListItems.items[i].icon = ICONCHAR_FILE;
-    setDynamicLabel(i, (infoFile.source == BOARD_SD) ? infoFile.Longfile[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num] : infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+    if (infoMachineSettings.long_filename_support == ENABLED)
+    {
+      setDynamicLabel(i, (infoFile.source == BOARD_SD) ? infoFile.Longfile[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num] : infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+    }
+    else
+    {
+      setDynamicLabel(i, (infoFile.source == BOARD_SD) ? infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num] : infoFile.file[i + infoFile.cur_page * NUM_PER_PAGE - infoFile.F_num]);
+    }
+
     printListItems.items[i].titlelabel.index = LABEL_DYNAMIC;
     menuDrawListItem(&printListItems.items[i], i);
 
@@ -215,7 +237,7 @@ void menuPrintFromSource(void)
 
   u8 update=0;
 
-  GUI_Clear(BACKGROUND_COLOR);
+  GUI_Clear(infoSettings.bg_color);
   GUI_DispStringInRect(0, 0, LCD_WIDTH, LCD_HEIGHT, textSelect(LABEL_LOADING));
 
   if (mountFS() == true && scanPrintFiles() == true)
@@ -238,9 +260,9 @@ void menuPrintFromSource(void)
 
   while(infoMenu.menu[infoMenu.cur] == menuPrintFromSource)
   {
-    GUI_SetBkColor(TITLE_BACKGROUND_COLOR);
+    GUI_SetBkColor(infoSettings.title_bg_color);
     Scroll_DispString(&titleScroll, LEFT);    //
-    GUI_SetBkColor(BACKGROUND_COLOR);
+    GUI_SetBkColor(infoSettings.bg_color);
 
     if(list_mode != true){
       Scroll_DispString(&gcodeScroll, CENTER); //
@@ -301,12 +323,12 @@ void menuPrintFromSource(void)
             if(infoHost.connected !=true) break;
             if(EnterDir(infoFile.file[key_num + start - infoFile.F_num]) == false) break;
 
-            if (infoFile.source == TFT_SD) {
+            if (infoFile.source != BOARD_SD) {
               //load bmp preview in flash if file exists
               int16_t gn;
               char *gnew;
               gn = strlen(infoFile.file[key_num + start - infoFile.F_num]) - 6; // -6 means ".gcode"
-              if(gn < 0) gn = 0; // for extension name ".g", ".gco" file, TODO: improve here in next version 
+              if(gn < 0) gn = 0; // for extension name ".g", ".gco" file, TODO: improve here in next version
               gnew = malloc(gn + 10);
               if (gnew != NULL) {
                 strcpy(gnew, getCurFileSource());
@@ -367,27 +389,27 @@ MENUITEMS sourceSelItems = {
 LABEL_PRINT,
 // icon                       label
  {{ICON_ONTFT_SD,            LABEL_TFTSD},
- #ifdef ONBOARD_SD_SUPPORT
-  {ICON_ONBOARD_SD,           LABEL_ONBOARDSD},
- #endif
- #ifdef U_DISK_SUPPROT
+ #ifdef U_DISK_SUPPORT
   {ICON_U_DISK,               LABEL_U_DISK},
+  #define ONBOARD_SD_INDEX 2
  #else
+  #define ONBOARD_SD_INDEX 1
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
  #endif
- #ifndef ONBOARD_SD_SUPPORT
-  {ICON_BACKGROUND,           LABEL_BACKGROUND},
- #endif
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
-  {ICON_BACK,                 LABEL_BACK},}
+  {ICON_BACKGROUND,           LABEL_BACKGROUND},
+  {ICON_BACK,                 LABEL_BACK}}
 };
 
 void menuPrint(void)
 {
   KEY_VALUES  key_num = KEY_IDLE;
+
+  sourceSelItems.items[ONBOARD_SD_INDEX].icon = (infoMachineSettings.onboard_sd_support == ENABLED) ? ICON_ONBOARD_SD : ICON_BACKGROUND;
+  sourceSelItems.items[ONBOARD_SD_INDEX].label.index = (infoMachineSettings.onboard_sd_support == ENABLED) ? LABEL_ONBOARDSD : LABEL_BACKGROUND;
 
   menuDrawPage(&sourceSelItems);
   while(infoMenu.menu[infoMenu.cur] == menuPrint)
@@ -402,26 +424,24 @@ void menuPrint(void)
         infoMenu.menu[++infoMenu.cur] = menuPowerOff;
         goto selectEnd;
 
-      #ifdef ONBOARD_SD_SUPPORT
-      case KEY_ICON_1:
-        list_mode = true; //force list mode in Onboard sd casd
-        infoFile.source = BOARD_SD;
-        infoMenu.menu[++infoMenu.cur] = menuPrintFromSource;   //TODO: fix here,  onboard sd card PLR feature
-        goto selectEnd;
-      #endif
-
-      #ifdef U_DISK_SUPPROT
-        #ifdef ONBOARD_SD_SUPPORT
-          case KEY_ICON_2:
-        #else
+      #ifdef U_DISK_SUPPORT
           case KEY_ICON_1:
-        #endif
-        list_mode = infoSettings.file_listmode; //follow list mode setting in usb disk
-        infoFile.source = TFT_UDISK;
-        infoMenu.menu[++infoMenu.cur] = menuPrintFromSource;
-        infoMenu.menu[++infoMenu.cur] = menuPowerOff;
-        goto selectEnd;
+            list_mode = infoSettings.file_listmode; //follow list mode setting in usb disk
+            infoFile.source = TFT_UDISK;
+            infoMenu.menu[++infoMenu.cur] = menuPrintFromSource;
+            infoMenu.menu[++infoMenu.cur] = menuPowerOff;
+            goto selectEnd;
+          case KEY_ICON_2:
+      #else
+          case KEY_ICON_1:
       #endif
+          if(infoMachineSettings.onboard_sd_support == ENABLED)
+          {
+            list_mode = true; //force list mode in Onboard sd casd
+            infoFile.source = BOARD_SD;
+            infoMenu.menu[++infoMenu.cur] = menuPrintFromSource;   //TODO: fix here,  onboard sd card PLR feature
+            goto selectEnd;
+          }
 
       case KEY_ICON_7:
         infoMenu.cur--;

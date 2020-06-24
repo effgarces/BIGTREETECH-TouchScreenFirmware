@@ -90,6 +90,7 @@ typedef struct
 }LISTITEMS;
 
 extern const GUI_RECT exhibitRect;
+extern const GUI_RECT rect_of_key[ITEM_PER_PAGE*2];
 #define CENTER_Y  ((exhibitRect.y1 - exhibitRect.y0)/2 + exhibitRect.y0)
 #define CENTER_X  ((exhibitRect.x1 - exhibitRect.x0 - BYTE_WIDTH)/2 + exhibitRect.x0)
 #define LISTITEM_WIDTH (LCD_WIDTH-(3*START_X)-LIST_ICON_WIDTH)
@@ -103,6 +104,7 @@ void volumeReminderMessage(int16_t inf, SYS_STATUS status);
 void busyIndicator(SYS_STATUS status);
 
 void GUI_RestoreColorDefault(void);
+uint8_t *labelGetAddress(const LABEL *label);
 void menuDrawItem (const ITEM * menuItem, uint8_t positon);
 void menuDrawIconOnly(const ITEM *item, uint8_t positon);
 void menuDrawListItem(const LISTITEM *item, uint8_t positon);
