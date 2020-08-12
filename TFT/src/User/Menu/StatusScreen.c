@@ -5,9 +5,9 @@ const MENUITEMS StatusItems = {
 // title
 LABEL_READY,
 // icon                       label
- {{ICON_STATUS_NOZZLE,         LABEL_BACKGROUND},
-  {ICON_STATUS_BED,            LABEL_BACKGROUND},
-  {ICON_STATUS_FAN,            LABEL_BACKGROUND},
+ {{ICON_STATUS_NOZZLE,        LABEL_BACKGROUND},
+  {ICON_STATUS_BED,           LABEL_BACKGROUND},
+  {ICON_STATUS_FAN,           LABEL_BACKGROUND},
   {ICON_STATUS_SPEED,         LABEL_BACKGROUND},
   {ICON_MAINMENU,             LABEL_MAINMENU},
   {ICON_BACKGROUND,           LABEL_BACKGROUND},
@@ -31,41 +31,24 @@ static u32 nextTime = 0;
 static u32 update_time = 2000; // 1 seconds is 1000
 SCROLL     msgScroll;
 static int lastConnection_status = -1;
-static bool booted = false;
+static bool msgNeedRefresh = false;
 
 static char msgtitle[20];
-static char msgbody[512];
+static char msgbody[128];
 
 static float xaxis;
 static float yaxis;
 static float zaxis;
 static bool gantryCmdWait = false;
 
-TOOL current_tool = NOZZLE0;
+uint8_t current_tool = NOZZLE0;
 int current_fan = 0;
 int current_speedID = 0;
 const char* SpeedID[2] = SPEED_ID;
 // text position rectangles for Live icons
 //icon 0
-const GUI_POINT pointID[4] = {
-  {1*ICON_WIDTH+0*SPACE_X+START_X - BYTE_WIDTH/2,    ICON_START_Y + 0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_NAME_Y0},
-  {2*ICON_WIDTH+1*SPACE_X+START_X - BYTE_WIDTH/2,    ICON_START_Y + 0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_NAME_Y0},
-  {3*ICON_WIDTH+2*SPACE_X+START_X - BYTE_WIDTH/2,    ICON_START_Y + 0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_NAME_Y0},
-  {4*ICON_WIDTH+3*SPACE_X+START_X - BYTE_WIDTH/2,    ICON_START_Y + 0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_NAME_Y0},
-};
-const GUI_RECT rectB[4] = {
-  {START_X + 0 * ICON_WIDTH + 0 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0,
-   START_X + 1 * ICON_WIDTH + 0 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0 + BYTE_HEIGHT},
-
-  {START_X + 1 * ICON_WIDTH + 1 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0,
-   START_X + 2 * ICON_WIDTH + 1 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0 + BYTE_HEIGHT},
-
-  {START_X + 2 * ICON_WIDTH + 2 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0,
-   START_X + 3 * ICON_WIDTH + 2 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0 + BYTE_HEIGHT},
-
-  {START_X + 3 * ICON_WIDTH + 3 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0,
-   START_X + 4 * ICON_WIDTH + 3 * SPACE_X,  ICON_START_Y +  0 * ICON_HEIGHT + 0 * SPACE_Y + SSICON_VAL_Y0 + BYTE_HEIGHT},
-};
+const GUI_POINT ss_title_point = {ICON_WIDTH - BYTE_WIDTH/2, SSICON_NAME_Y0};
+const GUI_POINT ss_val_point   = {ICON_WIDTH/2, SSICON_VAL_Y0};
 
 //info rectangle
 const GUI_RECT RectInfo = {START_X + 1 * ICON_WIDTH + 1 * SPACE_X,  ICON_START_Y +  1 * ICON_HEIGHT + 1 * SPACE_Y,
@@ -78,67 +61,64 @@ const GUI_RECT RecGantry = {START_X,                        1*ICON_HEIGHT+0*SPAC
                             4*ICON_WIDTH+3*SPACE_X+START_X, 1*ICON_HEIGHT+1*SPACE_Y+ICON_START_Y - STATUS_GANTRY_YOFFSET};
 
 
-/*set status icons */
-/* void set_status_icon(void)
-{
-  StatusItems.items[0] = ToolItems[0];
-  StatusItems.items[1] = ToolItems[1];
-  StatusItems.items[2] = ToolItems[2];
-  StatusItems.items[3] = SpeedItems[0];
-
-} */
-
 void drawTemperature(void)
 {
   //icons and their values are updated one by one to reduce flicker/clipping
-
   char tempstr[100];
-  GUI_SetTextMode(GUI_TEXTMODE_TRANS);
-  GUI_SetColor(HEADING_COLOR);
-  menuDrawIconOnly(&ToolItems[0],0);                                                   //Ext icon
-  GUI_DispStringRight(pointID[0].x, pointID[0].y, (u8 *)heatDisplayID[current_tool]);   //Ext label
 
-  GUI_SetColor(VAL_COLOR);
-  my_sprintf(tempstr, "%d/%d", heatGetCurrentTemp(current_tool), heatGetTargetTemp(current_tool));
-  GUI_DispStringInPrect(&rectB[0], (u8 *)tempstr);                            //Ext value
+  LIVE_INFO lvIcon;
+  lvIcon.enabled[0] = true;
+  lvIcon.enabled[1] = true;
 
-  GUI_SetColor(HEADING_COLOR);
-  menuDrawIconOnly(&ToolItems[1],1);                                          //Bed icon
-  GUI_DispStringRight(pointID[1].x, pointID[1].y, (u8 *)heatDisplayID[BED]);  //Bed label
-  GUI_SetColor(VAL_COLOR);
-  my_sprintf(tempstr, "%d/%d", heatGetCurrentTemp(BED), heatGetTargetTemp(BED));
-  GUI_DispStringInPrect(&rectB[1], (u8 *)tempstr);                            //Bed value
+  lvIcon.lines[0].h_align = RIGHT;
+  lvIcon.lines[0].v_align = TOP;
+  lvIcon.lines[0].fn_color = LCD_WHITE;
+  lvIcon.lines[0].text_mode = GUI_TEXTMODE_TRANS;
+  lvIcon.lines[0].pos = ss_title_point;
 
-  GUI_SetColor(HEADING_COLOR);
-  menuDrawIconOnly(&ToolItems[2],2);                                          //Fan icon
-  GUI_DispStringRight(pointID[2].x, pointID[2].y, (u8 *)fanID[current_fan]);  //Fan label
-  GUI_SetColor(VAL_COLOR);
+  lvIcon.lines[1].h_align = CENTER;
+  lvIcon.lines[1].v_align = CENTER;
+  lvIcon.lines[1].fn_color = LCD_BLACK;
+  lvIcon.lines[1].text_mode = GUI_TEXTMODE_TRANS;
+  lvIcon.lines[1].pos = ss_val_point;
 
-  u8 fs;
+  //TOOL / EXT
+  lvIcon.lines[0].text =  (u8 *)heatDisplayID[current_tool];
+  sprintf(tempstr, "%d/%d", heatGetCurrentTemp(current_tool), heatGetTargetTemp(current_tool));
+  lvIcon.lines[1].text = (u8 *)tempstr;
+  showLiveInfo(0,&lvIcon,&StatusItems.items[0]);
+
+  //BED
+  lvIcon.lines[0].text =  (u8 *)heatDisplayID[BED];
+  sprintf(tempstr, "%d/%d", heatGetCurrentTemp(BED), heatGetTargetTemp(BED));
+  lvIcon.lines[1].text = (u8 *)tempstr;
+  showLiveInfo(1,&lvIcon,&StatusItems.items[1]);
+
+  //FAN
+  lvIcon.lines[0].text = (u8 *)fanID[current_fan];
+
   if (infoSettings.fan_percentage == 1)
   {
-    fs = (fanGetSpeed(current_fan) * 100) / 255;
-    my_sprintf(tempstr, "%d%%", fs);
+    sprintf(tempstr, "%d%%", fanGetSpeedPercent(current_fan));
   }
   else
   {
-    fs = fanGetSpeed(current_fan);
-    my_sprintf(tempstr, "%d", fs);
+    sprintf(tempstr, "%d", fanGetSpeed(current_fan));
   }
+  lvIcon.lines[1].text = (u8 *)tempstr;
+  showLiveInfo(2,&lvIcon,&StatusItems.items[2]);
 
-  GUI_DispStringInPrect(&rectB[2], (u8 *)tempstr);                                //Fan value
+  //SPEED / flow
+  lvIcon.lines[0].text =  (u8 *)SpeedID[current_speedID];
+  sprintf(tempstr, "%d%%", speedGetPercent(current_speedID));
+  lvIcon.lines[1].text = (u8 *)tempstr;
+  showLiveInfo(3,&lvIcon,&SpeedItems[current_speedID]);
 
-  GUI_SetColor(HEADING_COLOR);
-  menuDrawIconOnly(&SpeedItems[current_speedID],3);                               //Speed / flow icon
-  GUI_DispStringRight(pointID[3].x, pointID[3].y, (u8 *)SpeedID[current_speedID]);//Speed / flow label
-  GUI_SetColor(VAL_COLOR);
-  my_sprintf(tempstr, "%d%s", speedGetPercent(current_speedID),"%");
-  GUI_DispStringInPrect(&rectB[3], (u8 *)tempstr);                                //Speed / Flow value
 
   GUI_SetTextMode(GUI_TEXTMODE_NORMAL);
   GUI_SetColor(GANTRYLBL_COLOR);
   GUI_SetBkColor(infoSettings.status_xyz_bg_color);
-  my_sprintf(tempstr, "   X: %.2f   Y: %.2f   Z: %.2f   ", xaxis, yaxis, zaxis);
+  sprintf(tempstr, "   X: %.2f   Y: %.2f   Z: %.2f   ", xaxis, yaxis, zaxis);
   GUI_DispStringInPrect(&RecGantry,(u8 *)tempstr);
 
   GUI_RestoreColorDefault();
@@ -230,16 +210,26 @@ float getAxisLocation(u8 n){
   }
 }
 
-
 void statusScreen_setMsg(const uint8_t *title, const uint8_t *msg)
 {
   strncpy(msgtitle, (char *)title, sizeof(msgtitle));
   strncpy(msgbody, (char *)msg, sizeof(msgbody));
+  msgNeedRefresh = true;
+}
 
-  if (infoMenu.menu[infoMenu.cur] == menuStatus && booted == true)
-  {
-    drawStatusScreenMsg();
+void statusScreen_setReady(void)
+{
+  strncpy(msgtitle, (char *)textSelect(LABEL_STATUS), sizeof(msgtitle));
+  if(infoHost.connected == false){
+    strncpy(msgbody, (char *)textSelect(LABEL_UNCONNECTED), sizeof(msgbody));
   }
+  else{
+    strncpy(msgbody, (char *)machine_type, sizeof(msgbody));
+    strcat(msgbody, " ");
+    strcat(msgbody, (char *)textSelect(LABEL_READY));
+  }
+
+  msgNeedRefresh = true;
 }
 
 void drawStatusScreenMsg(void)
@@ -258,6 +248,8 @@ void drawStatusScreenMsg(void)
   Scroll_CreatePara(&msgScroll, (u8 *)msgbody, &msgRect);
 
   GUI_RestoreColorDefault();
+
+  msgNeedRefresh = false;
 }
 
 void scrollMsg(void){
@@ -271,10 +263,9 @@ void toggleTool(void)
 {
   if (OS_GetTimeMs() > nextTime)
   {
-    if (infoSettings.tool_count > 1)
+    if (infoSettings.hotend_count > 1)
     {
-      current_tool = (TOOL)((current_tool+1) % HEATER_COUNT);
-      current_tool = (current_tool == 0) ? 1 : current_tool;
+      current_tool = (current_tool+1) % infoSettings.hotend_count;
     }
     if (infoSettings.fan_count > 1)
     {
@@ -303,37 +294,32 @@ void toggleTool(void)
 
 void menuStatus(void)
 {
-  booted = true;
   KEY_VALUES key_num = KEY_IDLE;
   GUI_SetBkColor(infoSettings.bg_color);
-  //set_status_icon();
   menuDrawPage(&StatusItems);
   GUI_SetColor(infoSettings.status_xyz_bg_color);
-      //GUI_ClearPrect(&RecGantry);
   GUI_FillPrect(&RecGantry);
   drawTemperature();
   drawStatusScreenMsg();
   while (infoMenu.menu[infoMenu.cur] == menuStatus)
   {
     if(infoHost.connected != lastConnection_status){
-      if(infoHost.connected == false){
-        statusScreen_setMsg(textSelect(LABEL_STATUS), textSelect(LABEL_UNCONNECTED));
-      }
-      else{
-        statusScreen_setMsg(textSelect(LABEL_STATUS), textSelect(LABEL_READY));
-      }
+      statusScreen_setReady();
       lastConnection_status = infoHost.connected;
+    }
+    if (msgNeedRefresh) {
+      drawStatusScreenMsg();
     }
     scrollMsg();
     key_num = menuKeyGetValue();
     switch (key_num)
     {
       case KEY_ICON_0:
-        heatSetCurrentTool(NOZZLE0);
+        heatSetCurrentIndex(current_tool);
         infoMenu.menu[++infoMenu.cur] = menuHeat;
         break;
       case KEY_ICON_1:
-        heatSetCurrentTool(BED);
+        heatSetCurrentIndex(BED);
         infoMenu.menu[++infoMenu.cur] = menuHeat;
         break;
       case KEY_ICON_2:

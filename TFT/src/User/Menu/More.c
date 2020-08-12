@@ -5,7 +5,8 @@ void menuIsPause(void)
 {
   u16 key_num = IDLE_TOUCH;
 
-  popupDrawPage(bottomDoubleBtn, textSelect(LABEL_WARNING), textSelect(LABEL_IS_PAUSE), textSelect(LABEL_CONFIRM), textSelect(LABEL_CANCEL));
+  popupDrawPage(DIALOG_TYPE_ALERT, bottomDoubleBtn, textSelect(LABEL_WARNING),
+                  textSelect(LABEL_IS_PAUSE), textSelect(LABEL_CONFIRM), textSelect(LABEL_CANCEL));
 
   while(infoMenu.menu[infoMenu.cur] == menuIsPause)
   {
@@ -14,7 +15,7 @@ void menuIsPause(void)
     {
       case KEY_POPUP_CONFIRM:
         if(setPrintPause(true,false))
-          infoMenu.menu[infoMenu.cur]=menuExtrude;
+          infoMenu.menu[infoMenu.cur] = menuExtrude;
         break;
 
       case KEY_POPUP_CANCEL:
@@ -25,25 +26,27 @@ void menuIsPause(void)
   }
 }
 
-const MENUITEMS moreItems = {
-//  title
-LABEL_MORE,
-// icon                       label
- {{ICON_HEAT,                 LABEL_HEAT},
-  {ICON_FAN,                  LABEL_FAN},
-  {ICON_EXTRUDE,              LABEL_EXTRUDE},
-  {ICON_PERCENTAGE,           LABEL_PERCENTAGE},
-  {ICON_BABYSTEP,             LABEL_BABYSTEP},
-  {ICON_FEATURE_SETTINGS,     LABEL_FEATURE_SETTINGS},
-  {ICON_RGB_SETTINGS,         LABEL_RGB_SETTINGS},
-  {ICON_BACK,                 LABEL_BACK},}
-};
-
 void menuMore(void)
 {
-  KEY_VALUES  key_num = KEY_IDLE;
+  // 1 title, ITEM_PER_PAGE items (icon + label)
+  const MENUITEMS moreItems = {
+    // title
+    LABEL_MORE,
+    // icon                         label
+    {{ICON_HEAT,                    LABEL_HEAT},
+     {ICON_FAN,                     LABEL_FAN},
+     {ICON_EXTRUDE,                 LABEL_EXTRUDE},
+     {ICON_PERCENTAGE,              LABEL_PERCENTAGE},
+     {ICON_FEATURE_SETTINGS,        LABEL_FEATURE_SETTINGS},
+     {ICON_MACHINE_SETTINGS,        LABEL_MACHINE_SETTINGS},
+     {ICON_BABYSTEP,                LABEL_BABYSTEP},
+     {ICON_BACK,                    LABEL_BACK},}
+  };
+
+  KEY_VALUES key_num;
 
   menuDrawPage(&moreItems);
+
   while(infoMenu.menu[infoMenu.cur] == menuMore)
   {
     key_num = menuKeyGetValue();
@@ -69,17 +72,17 @@ void menuMore(void)
         break;
 
       case KEY_ICON_4:
-        infoMenu.menu[++infoMenu.cur] = menuBabyStep;
-        break;
-
-      case KEY_ICON_5:
         infoMenu.menu[++infoMenu.cur] = menuFeatureSettings;
         break;
 
-      case KEY_ICON_6:
-        infoMenu.menu[++infoMenu.cur] = menuRGBSettings;
+      case KEY_ICON_5:
+        infoMenu.menu[++infoMenu.cur] = menuMachineSettings;
         break;
 
+      case KEY_ICON_6:
+        infoMenu.menu[++infoMenu.cur] = menuBabyStep;
+        break;
+        
       case KEY_ICON_7:
         infoMenu.cur--;
         break;
