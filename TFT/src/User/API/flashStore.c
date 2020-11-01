@@ -2,9 +2,10 @@
 #include "STM32_Flash.h"
 
 #define TSC_SIGN  0x20200512 // DO NOT MODIFY
-#define PARA_SIGN 0x20200810 // (YYYMMDD) If a new setting parameter is added,
+#define PARA_SIGN 0x20201021 // (YYYYMMDD) If a new setting parameter is added,
                              // modify here and initialize the initial value
                              // in the "infoSettingsReset()" function
+
 
 extern int32_t TSC_Para[7];
 extern SETTINGS infoSettings;
@@ -83,6 +84,8 @@ void readStoredPara(void)
   infoSettings.status_xyz_bg_color  = byteToWord(data + (index += 4), 4);
   infoSettings.list_border_color    = byteToWord(data + (index += 4), 4);
   infoSettings.list_button_color    = byteToWord(data + (index += 4), 4);
+  infoSettings.mesh_min_color       = byteToWord(data + (index += 4), 4);
+  infoSettings.mesh_max_color       = byteToWord(data + (index += 4), 4);
 
   infoSettings.touchSound           = byteToWord(data + (index += 4), 4);
   infoSettings.toastSound           = byteToWord(data + (index += 4), 4);
@@ -132,6 +135,7 @@ void readStoredPara(void)
   infoSettings.chamber_en           = byteToWord(data + (index += 4), 4);
   infoSettings.ext_count            = byteToWord(data + (index += 4), 4);
   infoSettings.fan_count            = byteToWord(data + (index += 4), 4);
+  infoSettings.fan_ctrl_count       = byteToWord(data + (index += 4), 4);
   infoSettings.auto_load_leveling   = byteToWord(data + (index += 4), 4);
   infoSettings.onboardSD            = byteToWord(data + (index += 4), 4);
   infoSettings.m27_refresh_time     = byteToWord(data + (index += 4), 4);
@@ -218,6 +222,8 @@ void storePara(void)
   wordToByte(infoSettings.status_xyz_bg_color,        data + (index += 4));
   wordToByte(infoSettings.list_border_color,          data + (index += 4));
   wordToByte(infoSettings.list_button_color,          data + (index += 4));
+  wordToByte(infoSettings.mesh_min_color,             data + (index += 4));
+  wordToByte(infoSettings.mesh_max_color,             data + (index += 4));
 
   wordToByte(infoSettings.touchSound,                 data + (index += 4));
   wordToByte(infoSettings.toastSound,                 data + (index += 4));
@@ -267,6 +273,7 @@ void storePara(void)
   wordToByte(infoSettings.chamber_en,                 data + (index += 4));
   wordToByte(infoSettings.ext_count,                  data + (index += 4));
   wordToByte(infoSettings.fan_count,                  data + (index += 4));
+  wordToByte(infoSettings.fan_ctrl_count,             data + (index += 4));
   wordToByte(infoSettings.auto_load_leveling,         data + (index += 4));
   wordToByte(infoSettings.onboardSD,                  data + (index += 4));
   wordToByte(infoSettings.m27_refresh_time,           data + (index += 4));

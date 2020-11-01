@@ -1,6 +1,10 @@
 #ifndef _BOOT_H_
 #define _BOOT_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "variants.h"
 #include "stdbool.h"
 #include "config.h"
@@ -13,10 +17,12 @@
   #define WORD_UNICODE_SIZE       0x480000
   #define BYTE_ASCII_SIZE           0x1000
   #define LARGE_FONT_SIZE           0x3000
-  #define ICON_MAX_SIZE             0x5000
+  #define FLASH_SIGN_SIZE           0x1000    //store status of last font/icon/config update
+  #define LANGUAGE_SIZE            0x12000
   #define STRINGS_STORE_MAX_SIZE    0x5000    //label strings max size
   #define PRINT_GCODES_MAX_SIZE     0x5000    //start/end/cancel gcodes  max size
   #define CUSTOM_GCODE_MAX_SIZE     0x5000    //custom gocdes max size
+  #define ICON_MAX_SIZE             0x5000
   #define INFOBOX_MAX_SIZE          0xB000
   #define SMALL_ICON_MAX_SIZE       0x2000
 #endif
@@ -27,9 +33,11 @@
 #define BYTE_ASCII_ADDR         (WORD_UNICODE + WORD_UNICODE_SIZE)    // ascii (+0x1000 4K)
 #define LARGE_FONT_ADDR         (BYTE_ASCII_ADDR + BYTE_ASCII_SIZE)   // Large ascii font
 //#define BYTE_RESERVE_ADDR      0x710000
-#define STRINGS_STORE_ADDR      (LARGE_FONT_ADDR + LARGE_FONT_SIZE)   //for label strings from config file
+#define FLASH_SIGN_ADDR         (LARGE_FONT_ADDR + LARGE_FONT_SIZE)       //for language label strings from language file
+#define LANGUAGE_ADDR           (FLASH_SIGN_ADDR + FLASH_SIGN_SIZE)   //for label strings from config file
+#define STRINGS_STORE_ADDR      (LANGUAGE_ADDR + LANGUAGE_SIZE)   //for label strings from config file
 #define PRINT_GCODES_ADDR       (STRINGS_STORE_ADDR + STRINGS_STORE_MAX_SIZE)   //for start/end/cancel gcodes from config file
-#define CUSTOM_GCODE_ADDR       (PRINT_GCODES_ADDR + PRINT_GCODES_MAX_SIZE)   //for custom gcodes from config file
+#define CUSTOM_GCODE_ADDR       (PRINT_GCODES_ADDR + PRINT_GCODES_MAX_SIZE)     //for custom gcodes from config file
 
 #define ICON_ADDR(num)          ((num) * ICON_MAX_SIZE + CUSTOM_GCODE_ADDR+CUSTOM_GCODE_MAX_SIZE)
 #define INFOBOX_ADDR            (ICON_ADDR(ICON_PREVIEW) + ICON_MAX_SIZE)   // total byte size 0xA7F8
@@ -40,6 +48,7 @@
 
 #define ADMIN_MODE_FILE "0:admin.txt"
 #define FIRMWARE_NAME STRINGIFY(HARDWARE) "." STRINGIFY(SOFTWARE_VERSION)
+#define FIRMWARE_NAME_SHORT STRINGIFY(HARDWARE_SHORT) STRINGIFY(SOFTWARE_VERSION_SHORT)
 #define BMP_ROOT_DIR "0:" ROOT_DIR "/bmp"
 #define FONT_ROOT_DIR "0:" ROOT_DIR "/font"
 #define TFT_RESET_FILE "0:reset.txt"
@@ -91,5 +100,9 @@ typedef union
 void scanUpdates(void);
 void dispIconFail(u8 *lbl);
 bool bmpDecode(char *bmp, u32 addr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

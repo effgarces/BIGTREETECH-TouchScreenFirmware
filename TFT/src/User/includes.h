@@ -63,6 +63,9 @@
 #include "MachineParameters.h"
 #include "FanControl.h"
 #include "SpeedControl.h"
+#include "BabystepControl.h"
+#include "ProbeOffsetControl.h"
+#include "ProbeHeightControl.h"
 
 #include "extend.h"
 #include "menu.h"
@@ -70,6 +73,7 @@
 #include "list_widget.h"
 #include "Popup.h"
 #include "Numpad.h"
+#include "Notification.h"
 #include "SanityCheck.h"
 
 //menu
@@ -82,10 +86,11 @@
 #include "Printing.h"
 #include "More.h"
 #include "Speed.h"
-#include "BabyStep.h"
 #include "ledcolor.h"
 #include "Parametersetting.h"
+#include "NotificationMenu.h"
 
+#include "Babystep.h"
 #include "Extrude.h"
 #include "Fan.h"
 #include "SettingsMenu.h"
@@ -94,8 +99,10 @@
 #include "MachineSettings.h"
 #include "FeatureSettings.h"
 #include "SendGcode.h"
-#include "leveling.h"
-#include "UBLSaveLoad.h"
+#include "Leveling.h"
+#include "BedLeveling.h"
+#include "MBL.h"
+#include "ABL.h"
 #include "BLTouch.h"
 #include "ProbeOffset.h"
 #include "PowerFailed.h"
@@ -108,7 +115,10 @@
 
 #include "Tuning.h"
 #include "Pid.h"
+#include "TuneExtruder.h"
 #include "ConnectionSettings.h"
+#include "MeshTuner.h"
+#include "MeshEditor.h"
 
 #define MAX_MENU_DEPTH 10       // max sub menu depth
 typedef void (*FP_MENU)(void);

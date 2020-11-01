@@ -1,5 +1,5 @@
-#ifndef _CONFIGRATION_H_
-#define _CONFIGRATION_H_
+#ifndef _CONFIGURATION_H_
+#define _CONFIGURATION_H_
 #define CONFIG_VERSION 20200810
 //===========================================================================
 //============================= General Settings ============================
@@ -66,19 +66,19 @@
 #define MARLIN_FNCOLOR 0
 
 /**
- *  Text displayed at the top of the TFT in Marlin Mode.
+ * Text displayed at the top of the TFT in Marlin Mode.
  */
 #define MARLIN_BANNER_TEXT "LCD12864 Simulator"
 
 /**
- *  show banner text at the top of the TFT in Marlin Mode.
+ * show banner text at the top of the TFT in Marlin Mode.
  */
 #define MARLIN_SHOW_BANNER  true //to enabled: true | to disabled: false
 /**
  * Run Marlin Mode in Fullscreen
  *
- *  Options:  0: Disabled. RECOMMENDED FOR TFT24
- *            1: Enabled Marlin Fullscreen mode.
+ * Options:  0: Disabled. RECOMMENDED FOR TFT24
+ *           1: Enabled Marlin Fullscreen mode.
  */
 #define DEFAULT_ST7920_FULLSCREEN_MODE 0 // 0: Disabled. RECOMMENDED FOR TFT24
 
@@ -89,7 +89,7 @@
  *
  * Allow seamless OctoPrint UART connection to the TFT's UART/serial expansion port no matter which mode the TFT is in.
  *
- *  Options:  0: Disabled    1: Enabled
+ * Options:  0: Disabled    1: Enabled
  */
 #define SERIAL_ALWAYS_ON 1  // Default: 0 (Disabled)
 
@@ -108,14 +108,22 @@
 #define BAUDRATE 115200
 
 /**
- * Default Touch Mode Language
+ * Default Primary Language (for Touch-Mode only)
  * Select the language to display on the LCD while in Touch Mode.
- * Options: ARMENIAN, CHINESE, CZECH, DUTCH, ENGLISH, FRENCH, GERMAN, HUNGARIAN, ITALIAN, JAPANESE, POLISH, PORTUGUESE, RUSSIAN, SLOVAK, SPAIN, CATALAN
+ * Options: ENGLISH, CHINESE, RUSSIAN, JAPANESE, ARMENIAN, GERMAN, CZECH,
+ *          SPANISH, FRENCH, PORTUGUESE, ITALIAN, POLISH, SLOVAK, DUTCH,
+ *          HUNGARIAN, TURKISH, GREEK, SLOVENIAN, CATALAN, TRAD_CHINESE,
  */
 #define DEFAULT_LANGUAGE ENGLISH
 
 /**
- *  Show bootscreen when starting up
+ * To add/flash a second language copy the required "language_xx.ini" file from
+ * "Language Packs" folder to the SD root folder. Then preset the reset button
+ * to load/flash the copied language file.
+*/
+
+/**
+ * Show bootscreen when starting up
  */
 #define SHOW_BTT_BOOTSCREEN
 
@@ -133,7 +141,7 @@
 
 /**
  * Toast notification duration (in ms)
- *  set the duration for displaying toast notification on top of the screen
+ * Set the duration for displaying toast notification on top of the screen
  */
 #define TOAST_DURATION 3000
 
@@ -170,11 +178,12 @@
 #define HOTEND_NUM   1    // set in 1~6
 #define EXTRUDER_NUM 1    // set in 1~6
 #define FAN_NUM      1    // set in 1~6
+#define FAN_CTRL_NUM 0    // set in 1~2
+#define MIXING_EXTRUDER 0 // set default 0, for mixing_extruder 1 (this option turns off autodetection of the number of extruders)
 
-//                         PLA    PETG    ABS    TPU
-#define PREHEAT_LABELS   {"PLA", "PETG", "ABS", "TPU"}
-#define PREHEAT_HOTEND   {200,   230,    240,   230}
-#define PREHEAT_BED      {60,    70,     100,   50}
+#define PREHEAT_LABELS   {"PLA", "PETG", "ABS", "WOOD", "TPU", "NYLON"}
+#define PREHEAT_HOTEND   {200,   230,    230,   170,    220,   250}
+#define PREHEAT_BED      {60,    70,     90,    50,     50,    90}
 
 #define HEAT_MAX_TEMP    {275,       275,       275,       275,       275,       275,       150,    60}   //max temperature can be set
 #define HEAT_SIGN_ID     {"T0:",     "T1:",     "T2:",     "T3:",     "T4:",     "T5:",     "B:",   "C:"}
@@ -185,9 +194,19 @@
 #define TOOL_CHANGE      {"T0",   "T1",      "T2",      "T3",      "T4",      "T5"}
 #define EXTRUDER_ID      {"E0",   "E1",      "E2",      "E3",      "E4",      "E5"}
 
-#define FAN_MAX_PWM      {255,       255,       255,       255,       255,       255}
-#define FAN_DISPLAY_ID   {"F0",      "F1",      "F2",      "F3",      "F4",      "F5"}
-#define FAN_CMD          {"M106 P0", "M106 P1", "M106 P2", "M106 P3", "M106 P4", "M106 P5" };
+/**
+ * Fan control
+ *
+ * Fan type Options:
+ *               0: FAN_TYPE_F       - default cooling fan speed (Check Marlin GCode M106)
+ *               1: FAN_TYPE_CTRL_S  - Controller fan speed for stepper or hot bed ON (Check Marlin GCode M710)
+ *               2: FAN_TYPE_CTRL_I  - Controller fan idle speed  (Check Marlin gcode - M710)
+ *               8: FAN_TYPE_UNKNOWN - Unknown / Not defined
+ */
+#define FAN_MAX_PWM      {       255,       255,       255,       255,       255,       255,       255,       255 };
+#define FAN_DISPLAY_ID   {      "F0",      "F1",      "F2",      "F3",      "F4",      "F5",     "CtL",     "CtI" };
+#define FAN_CMD          { "M106 P0", "M106 P1", "M106 P2", "M106 P3", "M106 P4", "M106 P5",    "M710",    "M710" };
+#define FAN_TYPE         {         0,         0,         0,         0,         0,         0,         1,         2 };
 
 #define SPEED_ID         {"Sp.", "Fr."}
 
@@ -228,27 +247,29 @@
 #define NOZZLE_PAUSE_M600_M601
 
 /**
- * Auto Save Load Leveling Data
- * The TFT will auto detect if Auto Bed Level is available.
+ * Auto save/load Bed Leveling data
+ * The TFT will auto detect if BL data are available.
  * Enable this will send "M500" after "G29" to store leveling value
  * and send "M420 S1" to enable leveling state after startup
+ *
+ * Options:  0: Disabled    1: Enabled
  */
-#define AUTO_SAVE_LOAD_LEVELING_VALUE true //to enabled: true | to disabled: false
+#define AUTO_SAVE_LOAD_BL_VALUE 1
 
 /**
- * Enable Unified Bed Leveling options
- *  Will attempt to auto detect and enable specific UBL options.
+ * Enable Bed Leveling options
+ * Will attempt to auto detect and/or enable specific BL options.
  *
  * WARNING - If you're not sure, leave on auto-detect or disabled.
  *           UBL has extra options other leveling systems might not have.
  *
- * Options:  0: Disabled    1: Enabled    2: Auto-detect [default]
+ * Options:  0: Disabled    1: Auto-detect [default]    2: ABL    3: BBL    4: UBL    5: MBL
  *
  */
-#define ENABLE_UBL_VALUE 1
+#define ENABLE_BL_VALUE 1
 
 /**
- * Enable friendly probe offset language.
+ * Enable friendly probe offset language
  *
  * Decrease/increase and "-" & "+" icons are replaced with down/up and friendly icons
  *
@@ -265,7 +286,7 @@
  *
  * Options:  0: Disabled    1: Enabled
  */
-#define QUICK_EEPROM_BUTTON 0
+#define QUICK_EEPROM_BUTTON 1
 
 /**
  * Manual Leveling
@@ -310,10 +331,43 @@
 #define BABYSTEP_MAX_UNIT      1.0f
 
 /**
+ * Mesh Editor settings
+ */
+
+// Set the maximum number of grid points per dimension
+//
+// NOTE: It must be in range 1 - 15
+//
+#define MESH_GRID_MAX_POINTS_X 10
+#define MESH_GRID_MAX_POINTS_Y 10
+
+// Set the color used for drawing the mesh with the minimun and maximum value in the grid
+//
+// Options: 0: WHITE,      1: BLACK,       2: RED,     3: GREEN,     4: BLUE,   5: CYAN,
+//          6: MAGENTA,    7: YELLOW,      8: ORANGE,  9: PURPLE,   10: LIME,  11: BROWN,
+//         12: DARKBLUE,  13: DARKGREEN,  14: GRAY,   15: DARKGRAY
+//
+#define MESH_MIN_COLOR 7
+#define MESH_MAX_COLOR 2
+
+// Enable keyboard drawn on left side
+//
+// If disabled, the keyboard is drawn on right side
+//
+// Options:  0: Disabled    1: Enabled
+//
+#define MESH_LEFT_KEYBOARD 0
+
+/**
  * PID autotune
  */
 #define PID_CMD             {"M303 U1 C8 E0", "M303 U1 C8 E1", "M303 U1 C8 E2", "M303 U1 C8 E3", "M303 U1 C8 E4", "M303 U1 C8 E5", "M303 U1 C8 E-1", ""};
 #define PID_PROCESS_TIMEOUT 900000                         // expressed in ms. E.g. 900000 corresponds to 15 minutes
+
+// LCD Encoder
+// In case LCD Encoder's sliding buttons (pin LCD_ENCA_PIN and LCD_ENCB_PIN)
+// don't produce any movement on menu, try to increase the delay (e.g. 64)
+#define LCD_ENCODER_DELAY 8                                // expressed in us. E.g. 8 corresponds to 0,000008 seconds
 
 // Power Supply
 #define PS_ON_ACTIVE_HIGH    true   // Set 'false' for ATX (1), 'true' for X-Box (2)
