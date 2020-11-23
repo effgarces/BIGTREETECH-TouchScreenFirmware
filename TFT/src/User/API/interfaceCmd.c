@@ -235,7 +235,17 @@ void sendQueueCmd(void)
           break;
         case 18: //M18/M84 disable steppers
         case 84:
-          coordinateSetKnown(false);
+          if(cmd_seen('S') && !cmd_seen('Y') && !cmd_seen('Z') && !cmd_seen('E'))
+          {
+            // Do not mark coordinate as unknown in this case as this is a M18/M84 S<timeout>
+            // command that doesn't disable the motors right away but will set their idling
+            // timeout.
+          }
+          else
+          {
+            // This is something else than an "M18/M84 S<timeout>", this will disable at least one stepper, set coordinate as unknown
+            coordinateSetKnown(false);
+          }
           break;
 
 #ifdef SERIAL_PORT_2
@@ -498,6 +508,23 @@ void sendQueueCmd(void)
           }
           break;
 
+        case 155: //M155
+          if (fromTFT)
+          {
+            heatSetUpdateWaiting(false);
+            if(cmd_seen('S'))
+            {
+              heatSyncUpdateSeconds(cmd_value());
+            }
+            else if (!cmd_seen('\n'))
+            {
+              char buf[12];
+              sprintf(buf, "S%u\n", heatGetUpdateSeconds());
+              strcat(infoCmd.queue[infoCmd.index_r].gcode, (const char*)buf);
+            }
+          }
+          break;
+
         case 106: //M106
         {
           uint8_t i = cmd_seen('P') ? cmd_value() : 0;
@@ -686,6 +713,11 @@ void sendQueueCmd(void)
           if(cmd_seen('E')) setParameter(P_JERK, E_AXIS, cmd_float());
           if(cmd_seen('J')) setParameter(P_JUNCTION_DEVIATION, 0, cmd_float());
           break;
+        case 206: //M206 Home offset
+          if(cmd_seen('X')) setParameter(P_HOME_OFFSET, X_AXIS, cmd_float());
+          if(cmd_seen('Y')) setParameter(P_HOME_OFFSET, Y_AXIS, cmd_float());
+          if(cmd_seen('Z')) setParameter(P_HOME_OFFSET, Z_AXIS, cmd_float());
+          break;
         case 207: //M207 FW Retract
           if(cmd_seen('S')) setParameter(P_FWRETRACT, 0, cmd_float());
           if(cmd_seen('W')) setParameter(P_FWRETRACT, 1, cmd_float());
@@ -725,7 +757,19 @@ void sendQueueCmd(void)
             }
             break;
         #endif
+        case 355: //M355
+        {
+          if(cmd_seen('S')) {
+            caseLightSetState(cmd_value() > 0);
+            caseLightSendWaiting(false);
+          }
+          if(cmd_seen('P')){
+            caseLightSetBrightness(cmd_value());
+            caseLightSendWaiting(false);
+          }
 
+          break;
+        }
         case 420: //M420
           //ABL state will be set through parsACK.c after receiving confirmation message from the printer
           // to prevent wrong state in case of error.
