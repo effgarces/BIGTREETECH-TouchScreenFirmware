@@ -3,29 +3,7 @@
 #include "Numpad.h"
 #include "Settings.h"
 
-const ITEM itemTool[] = {
-// icon                       label
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_NOZZLE,               LABEL_NOZZLE},
-  {ICON_BED,                  LABEL_BED},
-  {ICON_CHAMBER,              LABEL_CHAMBER},
-};
-
-#define ITEM_DEGREE_NUM 3
-
-const ITEM itemDegree[ITEM_DEGREE_NUM] = {
-// icon                       label
-  {ICON_1_DEGREE,             LABEL_1_DEGREE},
-  {ICON_5_DEGREE,             LABEL_5_DEGREE},
-  {ICON_10_DEGREE,            LABEL_10_DEGREE},
-};
-
-const  u8 item_degree[ITEM_DEGREE_NUM] = {1, 5, 10};
-static u8 item_degree_i = 1;
+static u8 degreeSteps_index = 1;
 
 static uint8_t c_heater = NOZZLE0;
 
@@ -33,6 +11,7 @@ void heatSetCurrentIndex(uint8_t index)
 {
   c_heater = index;
 }
+
 // Show/draw temperature in heat menu
 void showTemperature(uint8_t index)
 {
@@ -55,21 +34,21 @@ void menuHeat(void)
   MENUITEMS heatItems = {
     // title
     LABEL_HEAT,
-    // icon                      label
-    {{ICON_DEC,                  LABEL_DEC},
-     {ICON_BACKGROUND,           LABEL_BACKGROUND},
-     {ICON_BACKGROUND,           LABEL_BACKGROUND},
-     {ICON_INC,                  LABEL_INC},
-     {ICON_NOZZLE,               LABEL_NOZZLE},
-     {ICON_5_DEGREE,             LABEL_5_DEGREE},
-     {ICON_STOP,                 LABEL_STOP},
-     {ICON_BACK,                 LABEL_BACK},}
+    // icon                         label
+    {{ICON_DEC,                     LABEL_DEC},
+     {ICON_BACKGROUND,              LABEL_BACKGROUND},
+     {ICON_BACKGROUND,              LABEL_BACKGROUND},
+     {ICON_INC,                     LABEL_INC},
+     {ICON_NOZZLE,                  LABEL_NOZZLE},
+     {ICON_5_DEGREE,                LABEL_5_DEGREE},
+     {ICON_STOP,                    LABEL_STOP},
+     {ICON_BACK,                    LABEL_BACK},}
   };
 
   heatSetUpdateSeconds(TEMPERATURE_QUERY_FAST_SECONDS);
 
   heatItems.items[KEY_ICON_4] = itemTool[c_heater];
-  heatItems.items[KEY_ICON_5] = itemDegree[item_degree_i];
+  heatItems.items[KEY_ICON_5] = itemDegreeSteps[degreeSteps_index];
   menuDrawPage(&heatItems);
   showTemperature(c_heater);
 
@@ -86,43 +65,43 @@ void menuHeat(void)
     switch(key_num)
     {
       case KEY_ICON_0:
-        heatSetTargetTemp(c_heater, actTarget - item_degree[item_degree_i]);
+        heatSetTargetTemp(c_heater, actTarget - degreeSteps[degreeSteps_index]);
         break;
 
       case KEY_INFOBOX:
-        {
-          int32_t val = actTarget;
-          char titlestr[30];
+      {
+        char titlestr[30];
+        sprintf(titlestr, "Min:0 | Max:%i", infoSettings.max_temp[c_heater]);
 
-          sprintf(titlestr, "Min:0 | Max:%i", infoSettings.max_temp[c_heater]);
-          val = numPadInt((u8 *) titlestr, actTarget, 0, false);
-          val = NOBEYOND(0, val, infoSettings.max_temp[c_heater]);
-          if (val != actTarget)
-            heatSetTargetTemp(c_heater, val);
+        int16_t val = numPadInt((u8 *) titlestr, actTarget, 0, false);
+        val = NOBEYOND(0, val, infoSettings.max_temp[c_heater]);
 
-          menuDrawPage(&heatItems);
-          showTemperature(c_heater);
-        }
+        if (val != actTarget)
+          heatSetTargetTemp(c_heater, val);
+
+        menuDrawPage(&heatItems);
+        showTemperature(c_heater);
         break;
+      }
 
       case KEY_ICON_3:
-        heatSetTargetTemp(c_heater, actTarget + item_degree[item_degree_i]);
+        heatSetTargetTemp(c_heater, actTarget + degreeSteps[degreeSteps_index]);
         break;
 
       case KEY_ICON_4:
         do
         {
           c_heater = (c_heater + 1) % MAX_HEATER_COUNT;
-        }
-        while (!heaterIsValid(c_heater));
+        } while (!heaterIsValid(c_heater));
+
         heatItems.items[key_num] = itemTool[c_heater];
         menuDrawItem(&heatItems.items[key_num], key_num);
         showTemperature(c_heater);
         break;
 
       case KEY_ICON_5:
-        item_degree_i = (item_degree_i + 1) % ITEM_DEGREE_NUM;
-        heatItems.items[key_num] = itemDegree[item_degree_i];
+        degreeSteps_index = (degreeSteps_index + 1) % ITEM_DEGREE_NUM;
+        heatItems.items[key_num] = itemDegreeSteps[degreeSteps_index];
         menuDrawItem(&heatItems.items[key_num], key_num);
         break;
 
@@ -139,9 +118,9 @@ void menuHeat(void)
           if (encoderPosition)
           {
             if (encoderPosition > 0)
-              heatSetTargetTemp(c_heater, actTarget + item_degree[item_degree_i]);
+              heatSetTargetTemp(c_heater, actTarget + degreeSteps[degreeSteps_index]);
             else // if < 0)
-              heatSetTargetTemp(c_heater, actTarget - item_degree[item_degree_i]);
+              heatSetTargetTemp(c_heater, actTarget - degreeSteps[degreeSteps_index]);
             encoderPosition = 0;
           }
         #endif
