@@ -20,7 +20,7 @@
  * MODE_MARLIN // Marlin Mode
  * MODE_SERIAL_TSC // Touch Mode
  */
-#define DEFAULT_LCD_MODE MODE_MARLIN
+#define DEFAULT_LCD_MODE MODE_SERIAL_TSC
 
 /**
  * Default Startup Knob LED Color (TFT35 E3)
@@ -97,7 +97,7 @@
  *
  * Options:  0: Disabled    1: Enabled
  */
-#define SERIAL_ALWAYS_ON 1  // Default: 0 (Disabled)
+#define SERIAL_ALWAYS_ON 0  // Default: 0 (Disabled)
 
 //===========================================================================
 //========================== Touch Mode Settings ============================
